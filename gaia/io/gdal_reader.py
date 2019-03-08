@@ -124,7 +124,7 @@ class GaiaGDALReader(GaiaReader):
             'height': data.RasterYSize,
             'width': data.RasterXSize
         }
-        print('metadata: {}'.format(metadata))
+        # print('metadata: {}'.format(metadata))
         dataObject.set_metadata(metadata)
 
     def load_data(self, dataObject):

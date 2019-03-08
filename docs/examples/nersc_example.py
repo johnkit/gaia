@@ -1,5 +1,7 @@
 """
+Example program to demonstrate gaia object proxy to NERSC file
 """
+
 import argparse
 import getpass
 
@@ -58,10 +60,37 @@ if __name__ == '__main__':
         nersc_client.initialize(username=username, password=password, OTP=OTP)
 
 
+    # Create NERSCObject instance
+    # (The SFBay tif file has been manually uploaded to cori)
+    sfbay_url = nersc_client.lookup_url('project/data/TC_NG_SFBay_US_Geo.tif')
+    print('sfbay_url: {}'.format(sfbay_url))
 
 
     ### Freelancing
     import requests
+
+    # Try running python script
+    commands = [
+        'module load python/3.6-anaconda-4.4',
+        'source activate py3',
+        'cd project/git/gaia',
+        'python nersc/getmetadata.py {}'.format('todo')
+    ]
+    exe = ' &&' .join(commands)
+    data = {
+        'executable': exe,
+        'loginenv': 'true'
+    }
+    url = '{}/command/cori'.format(nersc_client.nersc_url)
+    cookies = dict(newt_sessionid=nersc_client.newt_sessionid)
+    print('requestiong metadata')
+    r = requests.post(url, data=data, cookies=cookies)
+    r.raise_for_status()
+    js = r.json()
+    print(js)
+
+    import sys
+    sys.exit()
 
     # Get home directory
 
@@ -82,11 +111,10 @@ if __name__ == '__main__':
     # js = r.json()
     # print(js)
 
-    # Create NERSCObject instance
-    # (The SFBay tif file has been manually uploaded to cori)
-    sfbay_url = nersc_client.lookup_url('project/data/TC_NG_SFBay_US_Geo.tif')
-    print('sfbay_url: {}'.format(sfbay_url))
     sfbay_object = gaia.create(sfbay_url)
     print('sfbay_object: {}'.format(sfbay_object))
+
+    metadata = sfbay_url.get_metadata()
+    print('metadata: {}'.format(metadata))
 
     print('finis')
