@@ -133,7 +133,7 @@ class NERSCInterface(object):
         :param test: (boolean) if True, raise exception if resource not found
         """
 
-        gaia_url = 'nersc:/{}/{}.nersc'.format(self.home_directory, path)
+        gaia_url = 'nersc://{}/{}.nersc'.format(self.home_directory, path)
 
         if test:
             # TODO
