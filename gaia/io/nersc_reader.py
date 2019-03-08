@@ -19,10 +19,15 @@ class NERSCReader(GaiaReader):
         """
         """
         super(NERSCReader, self).__init__(*args, **kwargs)
-        self.url = None
+        self.url = None    # Gaia-specific URL, starts with nersc://
+        self.path = None   # Path to file on NERSC global file system
 
         if isinstance(data_source, str):
             self.url = data_source
+            self.path = self.__class__._parse_nersc_url(self.url)
+        else:
+            raise RuntimeError(
+                'ERROR input data_source is not a string: {}'.format(data_source))
 
     @staticmethod
     def can_read(source, *args, **kwargs):
@@ -56,7 +61,9 @@ class NERSCReader(GaiaReader):
         return None
 
     def load_metadata(self, data_object):
-        metadata = NERSCInterface.get_instance().load_metadata()
+        if self.path is None:
+            self.path = this.__class__._parse_nersc_url(self.url)
+        metadata = NERSCInterface.get_instance().load_metadata(self.path)
         data_object.set_metadata(metadata)
 
     @staticmethod

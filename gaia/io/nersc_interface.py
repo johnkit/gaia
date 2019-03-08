@@ -126,6 +126,16 @@ class NERSCInterface(object):
 
         return True
 
+    def load_metadata(self, path):
+        # Run command on cori to get metadata
+        commands = [
+            'module load python/3.6-anaconda-4.4',
+            'source activate py3',
+            'python getmetadata.py {}'.format(path)
+        ]
+        exe = ' &&' .join(commands)
+        return None
+
     def lookup_url(self, path, test=False):
         """Returns internal url for resource at specified path
 
