@@ -25,3 +25,6 @@ class NERSCDataObject(GaiaDataObject):
             self._reader.load_metadata(self)
             # print('returned metadata: {}'.format(self._metadata))
         return self._metadata
+
+    def is_remote(self):
+        return True

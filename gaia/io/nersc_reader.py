@@ -27,7 +27,7 @@ class NERSCReader(GaiaReader):
             self.url = data_source
             self.path = self.__class__._parse_nersc_url(self.url)
         else:
-            raise RuntimeError(
+            raise GaiaException(
                 'ERROR input data_source is not a string: {}'.format(data_source))
 
     @staticmethod

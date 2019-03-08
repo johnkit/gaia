@@ -2,6 +2,7 @@
 from gaia.preprocess.pandas_processes import *
 from gaia.preprocess.gdal_processes import *
 from gaia.preprocess.girder_processes import *
+from gaia.preprocess.nersc_processes import *
 
 from gaia.process_registry import compute
 

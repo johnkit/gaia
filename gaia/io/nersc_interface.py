@@ -1,4 +1,5 @@
 from __future__ import print_function
+import json
 import os
 
 import requests
@@ -67,7 +68,7 @@ class NERSCInterface(object):
             session_id = js.get('newt_sessionid')
             return session_id
         else:
-            raise RunTimeError('NOT authenticated, response: {}'.format(r.text))
+            raise GaiaException('NOT authenticated, response: {}'.format(r.text))
 
     def get_session_status(self, newt_sessionid=None):
         """Requests current authentication status and number of seconds
@@ -152,10 +153,14 @@ class NERSCInterface(object):
         r.raise_for_status()
         js = r.json()
         if js.get('status') == 'OK':
-            metadata = js.get('output')
+            output = js.get('output')
+            metadata = json.loads(output)
             return metadata
         else:
-            raise RuntimeError('ERROR: {}'.format(js.get('error')))
+            raise GaiaException('ERROR: {}'.format(js.get('error')))
+
+    def compute_crop(self, dataset, geometry, output_filename):
+        raise RuntimeError('NOT YET IMPLEMENTED')
 
     def lookup_url(self, path, test=False):
         """Returns internal url for resource at specified path

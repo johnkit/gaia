@@ -45,6 +45,13 @@ class GaiaDataObject(object):
     def get_epsg(self):
         return self._epsg
 
+    def is_remote(self):
+        """Returns true if this object proxies data on a remote system
+
+        An example of remote data is GirderDataObject
+        """
+        return False
+
     def reproject(self, epsg):
         repro = geopandas.GeoDataFrame.copy(self.get_data())
         repro[repro.geometry.name] = repro.geometry.to_crs(epsg=epsg)

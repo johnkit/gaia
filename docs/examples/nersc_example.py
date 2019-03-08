@@ -5,6 +5,8 @@ Example program to demonstrate gaia object proxy to NERSC file
 import argparse
 import getpass
 
+import geojson
+
 import gaia
 from gaia.io import NERSCInterface
 
@@ -51,6 +53,33 @@ if __name__ == '__main__':
 
     metadata = sfbay_object.get_metadata()
     print('metadata: {}'.format(metadata))
+
+    # Setup crop geometry from image bounds
+    bounds = metadata.get('bounds',{}).get('coordinates')[0]
+    assert bounds, 'Dataset bounds missing'
+    # print(bounds)
+
+    # Compute center coordinates
+    x = (bounds[0][0] + bounds[2][0]) / 2.0
+    y = (bounds[0][1] + bounds[2][1]) / 2.0
+
+    # Use a percentage of height & width
+    dx = 0.1 * (bounds[2][0] - bounds[0][0])
+    dy = 0.1 * (bounds[2][1] - bounds[0][1])
+
+    x += dx
+    y -= dy
+    poly = [
+        [x,y], [x+dx,y+dy], [x-dx,y+dy], [x-dx,y-dy], [x+dx,y-dy]
+    ]
+
+    # Pass rectangle in as a LIST, to used same format as resgeodata
+    crop_geom = geojson.Polygon([poly])
+    print('crop geometry: {}'.format(crop_geom))
+
+    import gaia.preprocess
+    cropped_dataset = gaia.preprocess.crop(
+        sfbay_object, crop_geom, name='sfbay_crop.tif')
 
     print('finis')
 

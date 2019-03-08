@@ -21,6 +21,9 @@ class GirderDataObject(GaiaDataObject):
         self.mapnik_style = None
         # print('Created girder object, resource_id: {}'.format(resource_id))
 
+    def is_remote(self):
+        return True
+
     def get_metadata(self, force=False):
         if force or not self._metadata:
             gc = GirderInterface._get_girder_client()

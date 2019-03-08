@@ -26,16 +26,16 @@ def validate_girder(v):
             raise GaiaException('girder process requires GirderDataObject')
 
         # Second object must have vector geometry
-        if (isinstance(inputs[1], GaiaDataObject) and
-                inputs[1].get_datatype() != gaia.types.VECTOR):
-            template = """girder process cannot use datatype \"{}\"" \
-                for crop geometry"""
-            raise GaiaException(template.format(inputs[1].get_datatype()))
+        # and, for now, be on the local filesystem
+        geom_input = inputs[1]
+        if (isinstance(geom_input, GaiaDataObject)):
+            if geom_input.is_remote():
+                raise GaiaException('crop geometry from remote object not supported')
 
-        # For now, second object/geometry must be on local filesystem
-        if isinstance(inputs[1], GirderDataObject):
-            raise GaiaException('crop geometry on girder not supported')
-
+            elif geom_input.get_datatype() != gaia.types.VECTOR:
+                template = """girder process cannot use datatype \"{}\"" \
+                    for crop geometry"""
+                raise GaiaException(template.format(geom_input.get_datatype()))
         # Otherwise call up the chain to let parent do common validation
         return v(inputs, args)
 
@@ -62,7 +62,7 @@ def compute_girder_crop(inputs=[], args_dict={}):
 
     # Current support is single dataset
 
-    filename = args_dict.get('name', 'crop2_output.tif')
+    filename = args_dict.get('name', 'crop_output.tif')
     # print(filename)
 
     from gaia.io.girder_interface import GirderInterface
