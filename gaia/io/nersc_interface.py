@@ -1,5 +1,5 @@
 from __future__ import print_function
-import datetime
+import os
 
 import requests
 
@@ -9,7 +9,9 @@ from gaia.util import GaiaException, MissingParameterError
 class NERSCInterface(object):
     """An internal class that provides a client interface to a NERSC HPC machine
 
-    Uses the NEWT web service API at NERSC.
+    Uses the NEWT web service API at NERSC, along with python scripts
+    on cori and known paths.
+
     This class must be used as a singleton.
     """
 
@@ -127,14 +129,33 @@ class NERSCInterface(object):
         return True
 
     def load_metadata(self, path):
-        # Run command on cori to get metadata
+        """Run command (script) on cori to get metadata.
+
+        @param: *relative* path to data file
+        """
+        global_path = os.path.join(self.home_directory, path)
         commands = [
             'module load python/3.6-anaconda-4.4',
             'source activate py3',
-            'python getmetadata.py {}'.format(path)
+            'cd project/git/gaia',
+            'PYTHONPATH=. python nersc/getmetadata.py {}'.format(global_path)
         ]
         exe = ' &&' .join(commands)
-        return None
+        data = {
+            'executable': exe,
+            'loginenv': 'true'
+        }
+        url = '{}/command/cori'.format(self.nersc_url)
+        cookies = dict(newt_sessionid=self.newt_sessionid)
+        print('requesting metadata')
+        r = requests.post(url, data=data, cookies=cookies)
+        r.raise_for_status()
+        js = r.json()
+        if js.get('status') == 'OK':
+            metadata = js.get('output')
+            return metadata
+        else:
+            raise RuntimeError('ERROR: {}'.format(js.get('error')))
 
     def lookup_url(self, path, test=False):
         """Returns internal url for resource at specified path

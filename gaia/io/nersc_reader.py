@@ -12,6 +12,7 @@ import gaia.formats as formats
 class NERSCReader(GaiaReader):
     """A subclass for proxying geodata files on NERSC HPC machines.
 
+    Delegates I/O to NERSCInterface.
     Has limited capabilites based on functionality
     available from NERSC HPC machines.
     """
