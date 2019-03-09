@@ -44,15 +44,16 @@ if __name__ == '__main__':
 
     # Create NERSCObject instance
     # (The SFBay tif file has been manually uploaded to cori)
-    cori_path = 'project/data/TC_NG_SFBay_US_Geo.tif'
+    # cori_path = 'project/data/TC_NG_SFBay_US_Geo.tif'  # color image - not supported
+    cori_path = 'project/data/SFBay_grayscale.tif'
     sfbay_url = nersc_client.lookup_url(cori_path)
-    print('sfbay_url: {}'.format(sfbay_url))
+    # print('sfbay_url: {}'.format(sfbay_url))
 
     sfbay_object = gaia.create(sfbay_url)
-    print('sfbay_object: {}'.format(sfbay_object))
+    print('Input object: {}'.format(sfbay_object))
 
     metadata = sfbay_object.get_metadata()
-    print('metadata: {}'.format(metadata))
+    print('Input metadata: {}'.format(metadata))
 
     # Setup crop geometry from image bounds
     bounds = metadata.get('bounds',{}).get('coordinates')[0]
@@ -64,20 +65,24 @@ if __name__ == '__main__':
     y = (bounds[0][1] + bounds[2][1]) / 2.0
 
     # Use a percentage of height & width
-    dx = 0.1 * (bounds[2][0] - bounds[0][0])
-    dy = 0.1 * (bounds[2][1] - bounds[0][1])
+    dx = 0.04 * (bounds[2][0] - bounds[0][0])
+    dy = 0.05 * (bounds[2][1] - bounds[0][1])
 
+    # Create a "K" shaped polygon
     poly = [
         [x,y], [x+dx,y+dy], [x-dx,y+dy], [x-dx,y-dy], [x+dx,y-dy]
     ]
 
     # Pass rectangle in as a LIST, to used same format as resgeodata
     crop_geom = geojson.Polygon([poly])
-    print('crop geometry: {}'.format(crop_geom))
+    print('Crop geometry: {}'.format(crop_geom))
 
     import gaia.preprocess
-    cropped_dataset = gaia.preprocess.crop(
+    cropped_object = gaia.preprocess.crop(
         sfbay_object, crop_geom, output_path='project/data/sfbay_crop.tif')
+    print('Output object: {}'.format(cropped_object))
+    cropped_meta = cropped_object.get_metadata()
+    print('Output metadata', cropped_meta)
 
     print('finis')
 

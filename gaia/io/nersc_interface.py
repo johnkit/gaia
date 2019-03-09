@@ -5,7 +5,7 @@ import os
 import geojson
 import requests
 
-from gaia.util import GaiaException
+from gaia.util import GaiaException, GaiaProcessError
 
 
 class NERSCInterface(object):
@@ -69,7 +69,7 @@ class NERSCInterface(object):
             session_id = js.get('newt_sessionid')
             return session_id
         else:
-            raise GaiaException('NOT authenticated, response: {}'.format(r.text))
+            raise GaiaProcessError('NOT authenticated, response: {}'.format(r.text))
 
     def get_session_status(self, newt_sessionid=None):
         """Requests current authentication status and number of seconds
@@ -153,12 +153,15 @@ class NERSCInterface(object):
         r = requests.post(url, data=data, cookies=cookies)
         r.raise_for_status()
         js = r.json()
-        if js.get('status') == 'OK':
-            output = js.get('output')
-            metadata = json.loads(output)
-            return metadata
-        else:
-            raise GaiaException('ERROR: {}'.format(js.get('error')))
+
+        err_msg = js.get('error')
+        if err_msg:
+            raise GaiaProcessError('ERROR: {}'.format(err_msg))
+
+        output = js.get('output')
+        print('output', output, type(output))
+        metadata = json.loads(output)
+        return metadata
 
     def compute_crop(self, input_path, geometry, output_path):
         """Run commands (scripts) on cori to compute cropped dataset.
@@ -198,9 +201,17 @@ class NERSCInterface(object):
         r = requests.post(url, data=data, cookies=cookies)
         r.raise_for_status()
         js = r.json()
-        print(js)
-        if js.get('status') != 'OK':
-            raise GaiaException('ERROR: {}'.format(js.get('error')))
+
+        err_msg = js.get('error')
+        if err_msg:
+            raise GaiaProcessError('ERROR: {}'.format(err_msg))
+
+        # Create NERSCDataObject for output file (which is abs path)
+        gaia_url = 'nersc://{}.nersc'.format(output_path)
+        print('gaia_url', gaia_url)
+        from gaia.io.nersc_reader import NERSCReader
+        reader = NERSCReader(gaia_url)
+        return reader.read()
 
     def lookup_url(self, path, test=False):
         """Returns internal url for resource at specified path

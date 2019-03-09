@@ -1,7 +1,7 @@
 from __future__ import absolute_import, print_function
 import os
 
-from gaia import GaiaException
+from gaia.util import GaiaException
 from gaia.nersc_data import NERSCDataObject
 from gaia.io.gaia_reader import GaiaReader
 from gaia.io.nersc_interface import NERSCInterface

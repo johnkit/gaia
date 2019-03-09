@@ -26,6 +26,8 @@ if __name__ == '__main__':
     # Create input object
     input_object = gaia.create(args.input_path)
     # print('input_object: {}'.format(input_object))
+    # input_meta = input_object.get_metadata()
+    # print('input meta', input_meta, type(input_meta))
 
     # Create crop-geometry object
     geom_object = gaia.create(args.geometry_path)
