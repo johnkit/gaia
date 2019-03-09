@@ -2,9 +2,10 @@ from __future__ import print_function
 import json
 import os
 
+import geojson
 import requests
 
-from gaia.util import GaiaException, MissingParameterError
+from gaia.util import GaiaException
 
 
 class NERSCInterface(object):
@@ -163,7 +164,7 @@ class NERSCInterface(object):
         """Run commands (scripts) on cori to compute cropped dataset.
 
         """
-        # First upload croppiong geometry to hard-coded location
+        # First upload cropping geometry to hard-coded location
         print('Uploading crop geometry')
         geometry_filename = 'crop_geometry.geojson'
         geom_path = os.path.join(self.home_directory, 'project', 'data')
@@ -175,7 +176,7 @@ class NERSCInterface(object):
 
         geometry_path = os.path.join(self.home_directory, 'project', 'data', geometry_filename)
 
-        # If input path is relative, join with home dir
+        # Expect output_path to be relative to home dir
         if not output_path.startswith('/'):
             output_path = os.path.join(self.home_directory, output_path)
 

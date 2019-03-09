@@ -5,14 +5,14 @@ from builtins import (
 import sys
 from urllib.parse import urlencode
 
-import collections
-import json
+import geojson
 
 import gaia.types
 import gaia.validators as validators
-from gaia.util import GaiaException
+from gaia.util import GaiaException, GaiaProcessError
 from gaia.gaia_data import GaiaDataObject
 from gaia.nersc_data import NERSCDataObject
+from gaia.io.nersc_reader import NERSCReader
 from gaia.process_registry import register_process
 
 
@@ -51,17 +51,27 @@ def compute_nersc_crop(inputs=[], args_dict={}):
     """
     # Current support is single dataset
     dataset = inputs[0]
-    if isinstance(inputs[1], GaiaDataObject):
-        geometry = inputs[1].get_data()
+
+    # Format geometry as geojson feature collection
+    geometry = inputs[1]
+    if isinstance(geometry, GaiaDataObject):
+        geojson_data = inputs[1].get_data().__geo_interface__
+    elif geometry.get('type') == 'FeatureCollection':
+        geojson_data = geometry
+    elif geometry.get('coordinates') is not None:
+        # Create feature collection
+        feature = geojson.Feature(geometry=geometry)
+        geojson_data = geojson.FeatureCollection(features=[feature])
     else:
-        geometry = inputs[1]
+        raise GaiaProcessError('Unrecognized crop geometry')
 
     output_path = args_dict.get('output_path', 'crop_output.tif')
-    # print(filename)
 
     from gaia.io.nersc_interface import NERSCInterface
     nersc = NERSCInterface.get_instance()
-    nersc.compute_crop(dataset.nersc_path, geometry, output_path)
+    nersc.compute_crop(dataset.nersc_path, geojson_data, output_path)
 
     # If no exception, create new proxy
-    return NERSCDataObject(self, output_path)
+    output_url = nersc.lookup_url(output_path)
+    reader = NERSCReader(output_url)
+    return NERSCDataObject(reader, output_url)

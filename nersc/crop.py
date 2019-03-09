@@ -10,7 +10,6 @@ Example invocation (on john's account on cori):
 """
 
 import argparse
-import json
 import sys
 
 import gaia
@@ -26,14 +25,18 @@ if __name__ == '__main__':
 
     # Create input object
     input_object = gaia.create(args.input_path)
+    # print('input_object: {}'.format(input_object))
 
-    # Read crop geometry file
-    with open(args.geometry_path) as f:
-        content = f.read()
-        geometry = json.loads(content)
+    # Create crop-geometry object
+    geom_object = gaia.create(args.geometry_path)
+    # geom_meta = geom_object.get_metadata()
+    # print('geom_meta: {}'.format(geom_meta))
 
     # Generate cropped output
-    gaia.preprocess.crop(input_object, geometry, output_path)
+    output_object = gaia.preprocess.crop(input_object, geom_object)
+    # print('output', output_object)
+    gaia.save(output_object, args.output_path)
+    print('Created {}'.format(args.output_path))
 
     # No errors
     sys.exit(0)

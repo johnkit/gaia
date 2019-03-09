@@ -67,8 +67,6 @@ if __name__ == '__main__':
     dx = 0.1 * (bounds[2][0] - bounds[0][0])
     dy = 0.1 * (bounds[2][1] - bounds[0][1])
 
-    x += dx
-    y -= dy
     poly = [
         [x,y], [x+dx,y+dy], [x-dx,y+dy], [x-dx,y-dy], [x+dx,y-dy]
     ]
