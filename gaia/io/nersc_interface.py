@@ -129,12 +129,12 @@ class NERSCInterface(object):
 
         return True
 
-    def load_metadata(self, path):
+    def load_metadata(self, nersc_path):
         """Run command (script) on cori to get metadata.
 
-        @param: *relative* path to data file
+        @param nersc_path: *relative* path to data file
         """
-        global_path = os.path.join(self.home_directory, path)
+        global_path = os.path.join(self.home_directory, nersc_path)
         commands = [
             'module load python/3.6-anaconda-4.4',
             'source activate py3',
@@ -159,8 +159,47 @@ class NERSCInterface(object):
         else:
             raise GaiaException('ERROR: {}'.format(js.get('error')))
 
-    def compute_crop(self, dataset, geometry, output_filename):
-        raise RuntimeError('NOT YET IMPLEMENTED')
+    def compute_crop(self, input_path, geometry, output_path):
+        """Run commands (scripts) on cori to compute cropped dataset.
+
+        """
+        # First upload croppiong geometry to hard-coded location
+        print('Uploading crop geometry')
+        geometry_filename = 'crop_geometry.geojson'
+        geom_path = os.path.join(self.home_directory, 'project', 'data')
+        url = '{}/file/cori/{}'.format(self.nersc_url, geom_path)
+        cookies = dict(newt_sessionid=self.newt_sessionid)
+        files = dict(file=(geometry_filename, json.dumps(geometry)))
+        r = requests.post(url, files=files, cookies=cookies)
+        r.raise_for_status()
+
+        geometry_path = os.path.join(self.home_directory, 'project', 'data', geometry_filename)
+
+        # If input path is relative, join with home dir
+        if not output_path.startswith('/'):
+            output_path = os.path.join(self.home_directory, output_path)
+
+        # Run script to compute the crop
+        args = ' '.join([input_path, geometry_path, output_path])
+        commands = [
+            'module load python/3.6-anaconda-4.4',
+            'source activate py3',
+            'cd project/git/gaia',
+            'PYTHONPATH=. python nersc/crop.py {}'.format(args)
+        ]
+        exe = ' &&' .join(commands)
+        data = {
+            'executable': exe,
+            'loginenv': 'true'
+        }
+        url = '{}/command/cori'.format(self.nersc_url)
+        print('Requesting crop')
+        r = requests.post(url, data=data, cookies=cookies)
+        r.raise_for_status()
+        js = r.json()
+        print(js)
+        if js.get('status') != 'OK':
+            raise GaiaException('ERROR: {}'.format(js.get('error')))
 
     def lookup_url(self, path, test=False):
         """Returns internal url for resource at specified path

@@ -50,18 +50,18 @@ def compute_nersc_crop(inputs=[], args_dict={}):
     Runs the subset computation on NERSC machine
     """
     # Current support is single dataset
-    datasets = inputs[0]
+    dataset = inputs[0]
     if isinstance(inputs[1], GaiaDataObject):
         geometry = inputs[1].get_data()
     else:
         geometry = inputs[1]
 
-    output_filename = args_dict.get('name', 'crop_output.tif')
+    output_path = args_dict.get('output_path', 'crop_output.tif')
     # print(filename)
 
     from gaia.io.nersc_interface import NERSCInterface
     nersc = NERSCInterface.get_instance()
-    result = nersc.compute_crop(datasets, geometry, output_filename)
+    nersc.compute_crop(dataset.nersc_path, geometry, output_path)
 
-    # Todo check result status, create NERSCDataObject
-    return None
+    # If no exception, create new proxy
+    return NERSCDataObject(self, output_path)

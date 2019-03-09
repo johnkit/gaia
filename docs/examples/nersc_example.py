@@ -79,7 +79,7 @@ if __name__ == '__main__':
 
     import gaia.preprocess
     cropped_dataset = gaia.preprocess.crop(
-        sfbay_object, crop_geom, name='sfbay_crop.tif')
+        sfbay_object, crop_geom, output_path='project/data/sfbay_crop.tif')
 
     print('finis')
 
