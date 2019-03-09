@@ -22,6 +22,12 @@ def validate_pandas(v):
     processes defined in this module can re-use the same validate method.
     """
     def validator(inputs=[], args={}):
+        # Inputs must be local
+        if inputs[0].is_remote():
+            raise GaiaException('cannot crop remote object')
+        elif inputs[1].is_remote():
+            raise GaiaException('crop geometry from remote object not supported')
+
         # First should check if input is compatible w/ pandas computation
         if type(inputs[0].get_data()) is not GeoDataFrame:
             raise GaiaException('pandas process requires a GeoDataFrame')

@@ -19,6 +19,12 @@ def validate_gdal(v):
     sure the inputs are gdal-compatible.
     """
     def validator(inputs=[], args=[]):
+        # Inputs must be local
+        if inputs[0].is_remote():
+            raise GaiaException('cannot crop remote object')
+        elif inputs[1].is_remote():
+            raise GaiaException('crop geometry from remote object not supported')
+
         # FIXME: we should check we have a specific gdal type input also
         return v(inputs, args)
     return validator

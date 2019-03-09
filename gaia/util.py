@@ -32,6 +32,10 @@ class UnsupportedFormatException(GaiaException):
     """Raise when an unsupported data format is used"""
     pass
 
+class GaiaProcessError(GaiaException):
+    """Raise when a process error occurs"""
+    pass
+
 
 def get_uri_extension(uripath):
     idx = uripath.rfind('.')

@@ -29,6 +29,7 @@ import rasterio
 import rasterio.features
 from gaia.util import (
     GaiaException,
+    GaiaProcessError,
     UnsupportedFormatException,
     get_uri_extension
 )
@@ -236,6 +237,11 @@ def gdal_clip(raster_input, raster_output, polygon_json, nodata=0):
         return (pixel, line)
 
     src_image = get_dataset(raster_input)
+    if src_image.RasterCount != 1:
+        template = 'ERROR: Gaia only supports crop for 1-band images; this image has {}'
+        msg = template.format(src_image.RasterCount)
+        raise GaiaProcessError(msg)
+
     # Load the source data as a gdalnumeric array
     src_array = src_image.ReadAsArray()
     src_dtype = src_array.dtype

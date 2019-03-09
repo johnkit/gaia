@@ -3,7 +3,7 @@ from builtins import (
     bytes, str, open, super, range, zip, round, input, int, pow, object
 )
 
-from gaia import GaiaException
+from gaia.util import GaiaException, GaiaProcessError
 
 
 """
@@ -76,7 +76,11 @@ def compute(processName, inputs, args):
         # just return the first one.
         try:
             return p(inputs, args)
-        except GaiaException:
+        # Report process errors
+        except GaiaProcessError:
+            raise
+        # Continue for input validation errors
+        except GaiaException as ex:
             pass
 
-    raise GaiaException('No registered processes were able to validate inputs')
+    raise GaiaException('No registered processes were able to successfully complete')
