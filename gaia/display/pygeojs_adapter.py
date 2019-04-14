@@ -1,6 +1,8 @@
-"""
-Display options using pygeojs widget for Jupyter notebooks
-"""
+"""Display options using pygeojs widget for Jupyter notebooks."""
+
+import base64
+import os
+import tempfile
 
 # Is jupyterlab_geojs available?
 try:
@@ -11,6 +13,8 @@ try:
 except ImportError:
     IS_PYGEOJS_LOADED = False
 
+
+from osgeo import gdal
 import geopandas
 
 import gaia.types
@@ -18,7 +22,7 @@ from gaia.util import GaiaException
 
 
 def is_loaded():
-    """Returns boolean indicating if pygeojs is loaded
+    """Return boolean indicating if pygeojs is loaded.
 
     :return boolean
     """
@@ -26,7 +30,7 @@ def is_loaded():
 
 
 def show(data_objects, **options):
-    """Returns pygeojs scene for JupyterLab display
+    """Return pygeojs scene for JupyterLab display.
 
     :param data_objects: list of GeoData objects to display, in
         front-to-back rendering order.
@@ -167,6 +171,39 @@ def show(data_objects, **options):
 
         elif data_object._getdatatype() == gaia.types.VECTOR:
             pass  # vector objects handled above
+        elif data_object._getdatatype() == gaia.types.RASTER:
+            metadata = data_object.get_metadata()
+            coords = metadata.get('bounds', {}).get('coordinates')
+            if not isinstance(coords, list):
+                raise RuntimeError('raster coords not a list: {}'.format(coords))
+            if len(coords) != 1:
+                tpl = 'raster coords root length not 1: {}'
+                raise RuntimeError(tpl.format(len(coords)))
+
+            corners = coords[0]
+            if not isinstance(corners, list):
+                raise RuntimeError('raster corners not a list: {}'.format(coords))
+            if len(corners) != 4:
+                tpl = 'raster coords root length not 4: {}'
+                raise RuntimeError(tpl.format(len(coords)))
+
+            if feature_layer is None:
+                feature_layer = scene.createLayer('feature')
+
+            image_data = _gdal2png_base64(data_object.get_data())
+
+            quad_feature = feature_layer.createFeature('quad', arg={'cacheQuads': False})
+            # Unsure if corners are consistent, but by inspection...
+            quad_feature.data = [
+                {
+                    'ul': corners[3],
+                    'll': corners[0],
+                    'lr': corners[1],
+                    'ur': corners[2],
+                    'image': image_data
+                }
+            ]
+            quad_feature.opacity = 0.5  # default
         else:
             msg = 'Cannot display dataobject, type {}'.format(
                 data_object.__class__.__name__)
@@ -178,8 +215,32 @@ def show(data_objects, **options):
     return scene
 
 
+def _gdal2png_base64(gdal_dataset):
+    """Generate a png-formated, base64-encoded string from an input dataset.
+
+    For use in displaying gdal files using pygeojs quad feature
+    """
+    png_filename = 'raster.png'
+    # Use temp directory for png file
+    with tempfile.TemporaryDirectory() as temp_dir:
+        png_path = os.path.join(temp_dir, png_filename)
+        png_driver = gdal.GetDriverByName('PNG')
+        png_dataset = png_driver.CreateCopy(png_path, gdal_dataset, strict=0)
+        assert(png_dataset)
+        png_dataset = None  # close dataset, flusing any file IO
+
+        # Read png file and convert to base64 data
+        with open(png_path, 'rb') as fp:
+            encoded_bytes = base64.b64encode(fp.read())
+        encoded_string = 'data:image/png;base64,' + encoded_bytes.decode('ascii')
+        return encoded_string
+
+    # If we reached here, something went wrong
+    raise RuntimeError('Failed to convert gdal dataset to png')
+
+
 def _is_jupyter():
-    """Determines if Jupyter is loaded
+    """Determine if Jupyter is loaded.
 
     return: boolean
     """
